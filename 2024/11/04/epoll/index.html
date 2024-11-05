@@ -1,0 +1,825 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/icon_256x256.ico">
+  <link rel="icon" href="/img/icon_256x256.ico">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="amoy_alang">
+  <meta name="keywords" content="C++ 嵌入式 ROS">
+  
+    <meta name="description" content="这篇文章记录的是在Linux操作系统下socket套接字编程中的epoll模型和两种触发模型。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="浅谈I&#x2F;O复用模型之epoll模型">
+<meta property="og:url" content="http://example.com/2024/11/04/epoll/index.html">
+<meta property="og:site_name" content="Alang的个人博客">
+<meta property="og:description" content="这篇文章记录的是在Linux操作系统下socket套接字编程中的epoll模型和两种触发模型。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/img/tcp.png">
+<meta property="article:published_time" content="2024-11-05T03:57:06.000Z">
+<meta property="article:modified_time" content="2024-11-05T20:13:57.888Z">
+<meta property="article:author" content="amoy_alang">
+<meta property="article:tag" content="网络编程">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/img/tcp.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>浅谈I/O复用模型之epoll模型 - Alang的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":100,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":false,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":"SBdwaU1MCWi4P42eFaez4162-gzGzoHsz","app_key":"TGbAGIiwLiQQfhiFafevf9Sd","server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 80vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Alang的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/code12.jpg') no-repeat right top;background-position: right calc(15% - 10px);  background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="浅谈I/O复用模型之epoll模型"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        amoy_alang
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-11-05 11:57" pubdate>
+          2024年11月5日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          19 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="busuanzi_container_page_pv" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="busuanzi_value_page_pv"></span> 次
+        </span>
+        
+
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">浅谈I/O复用模型之epoll模型</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="I-O多路复用之epoll模型"><a href="#I-O多路复用之epoll模型" class="headerlink" title="I&#x2F;O多路复用之epoll模型"></a>I&#x2F;O多路复用之epoll模型</h1><h2 id="1-先谈谈select模型和poll模型的问题"><a href="#1-先谈谈select模型和poll模型的问题" class="headerlink" title="1 先谈谈select模型和poll模型的问题"></a>1 先谈谈select模型和poll模型的问题</h2><ol>
+<li>由于select模型中，socket是由一个32个元素的int型数组中元素的二进制位存储的(位图存储)，所以就有一个最大值的限定，在32位的系统中数量为32 * 4 * 8 &#x3D; 1024;poll模型为了解决这个问题，使用了链表结构存储socket。</li>
+<li>除了上述的问题，poll模型和select模型都存在以下两个很大程度上影响性能的问题：</li>
+</ol>
+<ul>
+<li>在调用select()函数或poll()函数之后，都要循环遍历所有socket查找需要处理的socket;</li>
+<li>在调用sele()函数或poll()函数之前，都需要传递所有监视对象的信息。</li>
+</ul>
+<ol start="3">
+<li>为了解决上述两个问题，我们需要重新构造一种I&#x2F;O复用模型，这个模型必须满足两点：</li>
+</ol>
+<ul>
+<li>在监视范围发生变化时，只返回产生变化的对应socket;</li>
+<li>只传递以此监视对象。</li>
+</ul>
+<h2 id="2-epoll模型"><a href="#2-epoll模型" class="headerlink" title="2 epoll模型"></a>2 epoll模型</h2><p>epoll模型的出现是为了解决select和poll模型留下的缺陷，使用epoll模型搭建服务器涉及到以下三个函数,函数原型分别如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">extern</span> <span class="hljs-type">int</span> <span class="hljs-title function_">epoll_create</span> <span class="hljs-params">(<span class="hljs-type">int</span> __size)</span> __THROW;<br><br><span class="hljs-keyword">extern</span> <span class="hljs-type">int</span> <span class="hljs-title function_">epoll_ctl</span> <span class="hljs-params">(<span class="hljs-type">int</span> __epfd, <span class="hljs-type">int</span> __op, <span class="hljs-type">int</span> __fd,</span><br><span class="hljs-params">		      <span class="hljs-keyword">struct</span> epoll_event *__event)</span> __THROW;<br><br><span class="hljs-keyword">extern</span> <span class="hljs-type">int</span> <span class="hljs-title function_">epoll_wait</span> <span class="hljs-params">(<span class="hljs-type">int</span> __epfd, <span class="hljs-keyword">struct</span> epoll_event *__events,</span><br><span class="hljs-params">		       <span class="hljs-type">int</span> __maxevents, <span class="hljs-type">int</span> __timeout)</span>;<br></code></pre></td></tr></table></figure>
+<p><strong>1. epoll_create</strong><br><strong>参数：</strong></p>
+<ul>
+<li>__size：这个参数在早期的Linux版本中用来指定监听的文件描述符的数量上限，但在Linux 2.6.8及以后的版本中，这个参数被忽略，因为内核会根据需要动态地分配资源。不过，为了兼容性和代码可读性，通常还是会传递一个合理的值。<br><strong>返回值：</strong></li>
+<li>成功时返回一个新的文件描述符（epoll实例），用于后续的epoll_ctl和epoll_wait调用。<br>失败时返回-1，并设置errno以指示错误。<br><strong>使用方法：</strong></li>
+<li>调用epoll_create创建一个epoll实例。</li>
+<li>使用返回的文件描述符作为epoll_ctl和epoll_wait的第一个参数。<br><strong>2. epoll_ctl</strong></li>
+</ul>
+<p><strong>参数：</strong></p>
+<ul>
+<li>__epfd：由epoll_create返回的文件描述符。</li>
+<li>__op：要执行的操作，可以是以下三个值之一：</li>
+</ul>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs markdown"><span class="hljs-bullet">-</span> EPOLL<span class="hljs-emphasis">_CTL_</span>ADD：添加一个新的文件描述符到epoll实例中。<br><span class="hljs-bullet">-</span> EPOLL<span class="hljs-emphasis">_CTL_</span>MOD：修改已存在的文件描述符的事件监听设置。<br><span class="hljs-bullet">-</span> EPOLL<span class="hljs-emphasis">_CTL_</span>DEL：从epoll实例中删除一个文件描述符。<br></code></pre></td></tr></table></figure>
+<ul>
+<li>__fd：要添加、修改或删除的文件描述符。</li>
+<li>__event：指向一个epoll_event结构的指针，该结构指定了要监听的事件类型（如读就绪、写就绪等）和与该文件描述符关联的数据（通常用于区分不同的事件源）。<br><strong>返回值：</strong></li>
+<li>成功时返回0。</li>
+<li>失败时返回-1，并设置errno以指示错误。<br><strong>使用方法：</strong></li>
+<li>使用EPOLL_CTL_ADD将新的文件描述符添加到epoll实例中。</li>
+<li>使用EPOLL_CTL_MOD修改已存在的文件描述符的监听设置。</li>
+<li>使用EPOLL_CTL_DEL从epoll实例中删除文件描述符。<br><strong>3. epoll_wait</strong><br><strong>参数：</strong></li>
+<li>__epfd：由epoll_create返回的文件描述符。</li>
+<li>__events：指向一个epoll_event数组的指针，该数组用于存储从epoll实例中返回的事件。</li>
+<li>__maxevents：__events数组的大小，即最多可以返回的事件数量。</li>
+<li>__timeout：等待事件的超时时间（毫秒）。如果为-1，则表示无限等待，直到有事件发生。如果为0，则立即返回，不管是否有事件发生。<br><strong>返回值：</strong></li>
+<li>成功时返回发生的事件数量。</li>
+<li>如果超时且没有事件发生，则返回0。</li>
+<li>失败时返回-1，并设置errno以指示错误。<br><strong>使用方法：</strong></li>
+<li>调用epoll_wait等待事件的发生。</li>
+<li>如果有事件发生，epoll_wait会将事件信息填充到__events数组中，并返回发生的事件数量。</li>
+<li>遍历__events数组，处理每个事件。</li>
+</ul>
+<h2 id="3-epoll模型服务器实例"><a href="#3-epoll模型服务器实例" class="headerlink" title="3 epoll模型服务器实例"></a>3 epoll模型服务器实例</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span><span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span><span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span><span class="hljs-string">&lt;string.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span><span class="hljs-string">&lt;unistd.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span><span class="hljs-string">&lt;netinet/in.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span><span class="hljs-string">&lt;sys/socket.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span><span class="hljs-string">&lt;sys/select.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span><span class="hljs-string">&lt;sys/epoll.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> LISTEN_NUM 10</span><br><br><span class="hljs-type">void</span> <span class="hljs-title function_">error_handing</span><span class="hljs-params">(<span class="hljs-type">char</span> *message)</span><br>&#123;<br>    <span class="hljs-built_in">fputs</span>(message,<span class="hljs-built_in">stderr</span>);<br>    fputc(<span class="hljs-string">&#x27;\n&#x27;</span>,<span class="hljs-built_in">stderr</span>);<br>    <span class="hljs-built_in">exit</span>(<span class="hljs-number">1</span>);<br>&#125;<br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">(<span class="hljs-type">int</span> argc, <span class="hljs-type">char</span> <span class="hljs-type">const</span> *argv[])</span><br>&#123;<br>    <span class="hljs-comment">//步骤1：创建套接字</span><br>    <span class="hljs-type">int</span> server_sock;<br>    server_sock = socket(PF_INET,SOCK_STREAM,IPPROTO_TCP);<br>    <span class="hljs-keyword">if</span> (server_sock == <span class="hljs-number">-1</span>)<br>    &#123;<br>        error_handing(<span class="hljs-string">&quot;socket() error&quot;</span>);<br>    &#125;<br>    <br>    <span class="hljs-comment">//步骤2：绑定监听端口</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr_in</span> <span class="hljs-title">server_addr</span>;</span><br>    <span class="hljs-built_in">memset</span>(&amp;server_addr,<span class="hljs-number">0</span>,<span class="hljs-keyword">sizeof</span>(server_addr));<br>    server_addr.sin_family = AF_INET;<br>    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);<br>    server_addr.sin_port = htons(atoi(<span class="hljs-string">&quot;3333&quot;</span>));<br>    <span class="hljs-keyword">if</span> (bind(server_sock,(<span class="hljs-keyword">struct</span> sockaddr *)&amp;server_addr,<span class="hljs-keyword">sizeof</span>(server_addr)) == <span class="hljs-number">-1</span>)<br>    &#123;<br>        error_handing(<span class="hljs-string">&quot;bind() error&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-comment">//步骤3：开启监听</span><br>    <span class="hljs-keyword">if</span> (listen(server_sock,LISTEN_NUM) == <span class="hljs-number">-1</span>)<br>    &#123;<br>        error_handing(<span class="hljs-string">&quot;listen() error&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-comment">//步骤4：做epoll_create()调用之前的准备</span><br><br>    <span class="hljs-type">int</span> epoll_fd;<span class="hljs-comment">//epoll实例</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">epoll_event</span> *<span class="hljs-title">epoll_events</span>;</span><span class="hljs-comment">//用于接收激活链表中的事件</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">epoll_event</span> <span class="hljs-title">epoll_event</span>;</span><span class="hljs-comment">//用于加入事件</span><br>    <span class="hljs-type">const</span> <span class="hljs-type">int</span> events_num = <span class="hljs-number">999</span>;<br>    epoll_events = (<span class="hljs-keyword">struct</span> epoll_event *)<span class="hljs-built_in">malloc</span>(<span class="hljs-keyword">sizeof</span>(<span class="hljs-keyword">struct</span> epoll_event) * events_num);<br><br>    <span class="hljs-comment">//步骤5：调用epoll_create()初始化epoll实例</span><br>    epoll_fd = epoll_create(<span class="hljs-number">1</span>); <span class="hljs-comment">//可以忽略这个参数，填入的参数为操作系统参考</span><br>   <br>    <span class="hljs-comment">// 将服务器套接字加入 epoll 监听</span><br>    epoll_event.events = EPOLLIN; <span class="hljs-comment">//需要读取数据的情况</span><br>    epoll_event.data.fd = server_sock;<br><br>    <span class="hljs-comment">//例程epoll_fd中添加文件描述符server_sock，之后epoll_fd就会监听server_sock的EPOLLIN事件</span><br>    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, server_sock, &amp;epoll_event); <br><br>    <span class="hljs-type">int</span> event_count;<span class="hljs-comment">//激活事件计数</span><br>    <span class="hljs-keyword">while</span> (<span class="hljs-number">1</span>)<br>    &#123;<br>        <span class="hljs-comment">//步骤5：调用epoll_wait()函数等待激活事件出现</span><br>        event_count = epoll_wait(epoll_fd, epoll_events, events_num, <span class="hljs-number">-1</span>); <span class="hljs-comment">//获取改变了的文件描述符，返回数量,-1表示永久等待</span><br>        <span class="hljs-keyword">if</span> (event_count == <span class="hljs-number">-1</span>)<br>        &#123;<br>            <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;epoll_wait() error\n&quot;</span>);<br>            <span class="hljs-keyword">break</span>;<br>        &#125;<br><br>        <span class="hljs-comment">//步骤6：处理激活事件</span><br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">size_t</span> i = <span class="hljs-number">0</span>; i &lt; event_count; i++)<br>        &#123;<br>            <span class="hljs-comment">//如果是服务器套接字的事件</span><br>            <span class="hljs-keyword">if</span> (epoll_events[i].data.fd == server_sock)<span class="hljs-comment">//客户端请求连接时</span><br>            &#123;<br><br>                <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr</span> <span class="hljs-title">client_addr</span>;</span><br>                <span class="hljs-type">int</span> client_addr_size = <span class="hljs-keyword">sizeof</span>(client_addr);<br>                <span class="hljs-type">int</span> client_sock;<br>                <span class="hljs-comment">// 接受客户端连接</span><br>                client_sock = accept(server_sock, (<span class="hljs-keyword">struct</span> sockaddr *)&amp;client_addr, &amp;client_addr_size);<br><br>                epoll_event.events = EPOLLIN;<br><br>                <span class="hljs-comment">//epoll_event.events = EPOLLIN | EPOLLET;设置为边缘触发模式</span><br><br>                <span class="hljs-comment">//设置为非阻塞模式</span><br>                <span class="hljs-comment">// int flags = fcntl(client_sock, F_GETFL, 0);</span><br>                <span class="hljs-comment">// if (fcntl(client_sock, F_SETFL, flags | O_NONBLOCK) == -1) &#123;</span><br>                <span class="hljs-comment">//     perror(&quot;fcntl()&quot;);</span><br>                <span class="hljs-comment">//     exit(EXIT_FAILURE);</span><br>                <span class="hljs-comment">// &#125;</span><br><br>                epoll_event.data.fd = client_sock; <span class="hljs-comment">//把客户端套接字添加进去</span><br>                epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_sock, &amp;epoll_event);<br>                <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Connected client... %d \n&quot;</span>, client_sock);<br>            &#125;<br>            <span class="hljs-keyword">else</span> <span class="hljs-comment">//是客户端套接字时</span><br>            &#123;<br>                <span class="hljs-type">const</span> <span class="hljs-type">int</span> message_size =<span class="hljs-number">30</span>;<br>                <span class="hljs-type">char</span> message[message_size];<br>                <span class="hljs-type">int</span> read_nums = read(epoll_events[i].data.fd, message, message_size);<br>                <span class="hljs-keyword">if</span> (read_nums == <span class="hljs-number">0</span>)<br>                &#123;<br>                    epoll_ctl(epoll_fd, EPOLL_CTL_DEL, epoll_events[i].data.fd, <span class="hljs-literal">NULL</span>); <span class="hljs-comment">//从epoll中删除套接字</span><br>                    close(epoll_events[i].data.fd);<br>                    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Closed client : %d \n&quot;</span>, epoll_events[i].data.fd);<br>                &#125;<br>                <span class="hljs-keyword">else</span> <span class="hljs-comment">// 读取数据并回传给客户端</span><br>                &#123;<br>                    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Receive message is %s\n&quot;</span>,message);<br>                    write(epoll_events[i].data.fd, message, read_nums);<br>                &#125;<br>            &#125;<br>        &#125;<br>    &#125;<br>    <span class="hljs-comment">//步骤7：关闭套接字和epoll实例</span><br>    close(server_sock);<br>    close(epoll_fd);<br> <br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<h2 id="4-关于边缘触发和水平触发（条件触发）"><a href="#4-关于边缘触发和水平触发（条件触发）" class="headerlink" title="4 关于边缘触发和水平触发（条件触发）"></a>4 关于边缘触发和水平触发（条件触发）</h2><ol>
+<li>定义区别：</li>
+</ol>
+<ul>
+<li>水平触发（Level Triggered）是只要输入缓冲区有数据，就会一直通知该事件，假设输入缓冲区中有数据，就会注册一次事件，读取之后缓冲区还剩余数据，就会再次注册输入事件；</li>
+<li>边缘触发（Edge Triggered）是只有输入缓冲区收到数据时通知一次事件，即使拂去之后缓冲区里面还剩余数据，也不会注册事件。</li>
+</ul>
+<ol start="2">
+<li>效率区别：</li>
+</ol>
+<ul>
+<li>水平触发由于每次文件描述符就绪时都会通知应用程序，因此可能会引起频繁的上下文切换，影响效率；</li>
+<li>边缘触发只在状态变化时通知应用程序，可以减少不必要的上下文切换，提高效率，特别适合处理大量事件和高并发的场景。</li>
+</ul>
+<ol start="3">
+<li>适用场景区别：</li>
+</ol>
+<ul>
+<li>水平触发适用于对实时性要求不是非常高的应用，例如普通的网络服务器或者需要周期性处理数据的情况，适合处理一般的数据读取、写入等操作；</li>
+<li>边缘触发适用于对事件响应速度要求较高的应用，例如高性能网络服务器，需要快速处理大量连接或数据的情况，适合处理大数据流、高并发请求等场景，可以减少因为频繁通知而引起的性能开销。</li>
+</ul>
+<ol start="4">
+<li>使用事项：</li>
+</ol>
+<ul>
+<li>epoll模型默认使用的是水平触发模式，select模型使用的也是水平触发模式；</li>
+<li>更改为边缘触发模式需要确保一次将缓冲区的数据读完，如果以阻塞方式读取或写入数据，可能会导致服务器或客户端长时间停顿，所以使用边缘触发模式时最好更改为非阻塞I&#x2F;O。</li>
+</ul>
+<h2 id="关于边缘触发的实例修改建议"><a href="#关于边缘触发的实例修改建议" class="headerlink" title="关于边缘触发的实例修改建议"></a>关于边缘触发的实例修改建议</h2><ol>
+<li>更改事件触发方式为边缘触发<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c">epoll_event.events = EPOLLIN | EPOLLET;<br></code></pre></td></tr></table></figure></li>
+<li>更改客户端socket为非阻塞I&#x2F;O模式<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs c"><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;fcntl.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;errno.h&gt;</span></span><br><br><span class="hljs-comment">//sockfd为客户端socket</span><br><span class="hljs-type">int</span> flags = fcntl(sockfd, F_GETFL, <span class="hljs-number">0</span>);<br><span class="hljs-keyword">if</span> (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) == <span class="hljs-number">-1</span>) &#123;<br>    perror(<span class="hljs-string">&quot;fcntl()&quot;</span>);<br>    <span class="hljs-built_in">exit</span>(EXIT_FAILURE);<br>&#125;<br><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="边缘触发优于水平触发的一点"><a href="#边缘触发优于水平触发的一点" class="headerlink" title="边缘触发优于水平触发的一点"></a>边缘触发优于水平触发的一点</h2><p><strong>边缘触发可以分离接收数据和处理数据的时间点</strong></p>
+<ul>
+<li>如果是水平触发，输入缓冲区收到了数据，就要求读取数据，否则将会一直注册事件，这是不必要的；</li>
+<li>如果是边缘触发的话，即使服务器输入缓冲区收到了数据，服务器也能决定处理数据的时间点，这样带来了极大的灵活性。</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/TCP-IP%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/" class="category-chain-item">TCP/IP网络编程</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/" class="print-no-link">#网络编程</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>浅谈I/O复用模型之epoll模型</div>
+      <div>http://example.com/2024/11/04/epoll/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>amoy_alang</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年11月5日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/11/04/C++%E6%B7%B1%E6%B5%85%E6%8B%B7%E8%B4%9D/" title="C++深浅拷贝">
+                        <span class="hidden-mobile">C++深浅拷贝</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"SBdwaU1MCWi4P42eFaez4162-gzGzoHsz","appKey":"TGbAGIiwLiQQfhiFafevf9Sd","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="" target="_blank" rel="nofollow noopener"><span>Amoy</span></a> <i class="iconfont icon-love"></i> <a href="" target="_blank" rel="nofollow noopener"><span>Alang</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+
+  
+
+</div>
+
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
