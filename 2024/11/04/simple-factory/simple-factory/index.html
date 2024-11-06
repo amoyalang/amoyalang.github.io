@@ -19,26 +19,26 @@
   <meta name="author" content="amoy_alang">
   <meta name="keywords" content="C++ 嵌入式 ROS">
   
-    <meta name="description" content="这篇文章记录的是《TCP&#x2F;IP网络编程》中：理解网络编程和套接字章节记录。">
+    <meta name="description" content="C++简单工厂模式">
 <meta property="og:type" content="article">
-<meta property="og:title" content="TCP&#x2F;IP网络编程：理解网络编程和套接字">
-<meta property="og:url" content="https://amoyalang.github.io/2024/11/04/net-code/index.html">
+<meta property="og:title" content="设计模式：简单工厂模式">
+<meta property="og:url" content="https://amoyalang.github.io/2024/11/04/simple-factory/simple-factory/index.html">
 <meta property="og:site_name" content="Alang的个人博客">
-<meta property="og:description" content="这篇文章记录的是《TCP&#x2F;IP网络编程》中：理解网络编程和套接字章节记录。">
+<meta property="og:description" content="C++简单工厂模式">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://amoyalang.github.io/img/tcp.png">
-<meta property="article:published_time" content="2024-11-05T06:04:45.000Z">
-<meta property="article:modified_time" content="2024-11-05T22:28:06.196Z">
+<meta property="og:image" content="https://amoyalang.github.io/img/design_patterns.png">
+<meta property="article:published_time" content="2024-11-05T07:14:15.000Z">
+<meta property="article:modified_time" content="2024-11-06T00:14:23.436Z">
 <meta property="article:author" content="amoy_alang">
-<meta property="article:tag" content="网络编程">
+<meta property="article:tag" content="设计模式">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://amoyalang.github.io/img/tcp.png">
+<meta name="twitter:image" content="https://amoyalang.github.io/img/design_patterns.png">
   
   
     <meta name="referrer" content="no-referrer-when-downgrade">
   
   
-  <title>TCP/IP网络编程：理解网络编程和套接字 - Alang的个人博客</title>
+  <title>设计模式：简单工厂模式 - Alang的个人博客</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -217,7 +217,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="TCP/IP网络编程：理解网络编程和套接字"></span>
+            <span id="subtitle" data-typed-text="设计模式：简单工厂模式"></span>
           
         </div>
 
@@ -233,7 +233,7 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2024-11-05 14:04" pubdate>
+        <time datetime="2024-11-05 15:14" pubdate>
           2024年11月5日 下午
         </time>
       </span>
@@ -245,7 +245,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          627 字
+          934 字
         
       </span>
     
@@ -256,7 +256,7 @@
         
         
         
-          6 分钟
+          8 分钟
         
       </span>
     
@@ -306,31 +306,47 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">TCP/IP网络编程：理解网络编程和套接字</h1>
+            <h1 id="seo-header">设计模式：简单工厂模式</h1>
             
             
               <div class="markdown-body">
                 
-                <h1 id="TCP-IP网络编程：理解网络编程和套接字"><a href="#TCP-IP网络编程：理解网络编程和套接字" class="headerlink" title="TCP&#x2F;IP网络编程：理解网络编程和套接字"></a>TCP&#x2F;IP网络编程：理解网络编程和套接字</h1><p>网络编程又叫做套接字编程，是因为在网络编程中依赖使用套接字(socket),网络编程一般是C&#x2F;S架构，即客户端&#x2F;服务器模式，在服务器端依赖套接字绑定自身接口，并开启监听客户端连接，然后进行读写操作；客户端则依赖套接字进行接口连接，以进行收发操作。</p>
-<h2 id="服务器端"><a href="#服务器端" class="headerlink" title="服务器端"></a>服务器端</h2><h3 id="服务器端遵循以下步骤进行搭建"><a href="#服务器端遵循以下步骤进行搭建" class="headerlink" title="服务器端遵循以下步骤进行搭建"></a>服务器端遵循以下步骤进行搭建</h3><ol>
-<li>创建套接字</li>
-<li>绑定监听端口</li>
-<li>开始监听</li>
-<li>接受连接</li>
-<li>进行读写操作</li>
-<li>关闭连接</li>
+                <h1 id="什么是简单工厂模式？"><a href="#什么是简单工厂模式？" class="headerlink" title="什么是简单工厂模式？"></a>什么是简单工厂模式？</h1><ol>
+<li>简单工厂模式属于创造型模式，而工厂就是负责生产和创造的，顾名思义。</li>
+<li>建立对象的类就如一个工厂，而需要被建立的对象就是一个个产品；在工厂中加工产品，使用产品的人，不用在乎产品是如何生产出来的。从软件开发的角度来说，这样就有效的降低了模块之间的耦合。</li>
 </ol>
-<p>下面是创建服务器端通讯的实例</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">//步骤1：创建套接字</span><br>    <span class="hljs-type">int</span> server_sock;<br>    server_sock = socket(PF_INET,SOCK_STREAM,<span class="hljs-number">0</span>);<br>    <span class="hljs-keyword">if</span> (server_sock == <span class="hljs-number">-1</span>)<br>    &#123;<br>        error_handing(<span class="hljs-string">&quot;socket() error&quot;</span>);<br>    &#125;<br>    <br>    <span class="hljs-comment">//步骤2：绑定监听端口</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr_in</span> <span class="hljs-title">server_addr</span>;</span><br>    <span class="hljs-built_in">memset</span>(&amp;server_addr,<span class="hljs-number">0</span>,<span class="hljs-keyword">sizeof</span>(server_addr));<br>    server_addr.sin_family = AF_INET;<br>    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);<br>    server_addr.sin_port = htons(atoi(<span class="hljs-string">&quot;3333&quot;</span>));<br>    <span class="hljs-keyword">if</span> (bind(server_sock,(<span class="hljs-keyword">struct</span> sockaddr *)&amp;server_addr,<span class="hljs-keyword">sizeof</span>(server_addr)) == <span class="hljs-number">-1</span>)<br>    &#123;<br>        error_handing(<span class="hljs-string">&quot;bind() error&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-comment">//步骤3：开启监听</span><br>    <span class="hljs-keyword">if</span> (listen(server_sock,<span class="hljs-number">5</span>) == <span class="hljs-number">-1</span>)<br>    &#123;<br>        error_handing(<span class="hljs-string">&quot;listen() error&quot;</span>);<br>    &#125;<br>    <br>    <span class="hljs-comment">//步骤4：接受连接</span><br>    <span class="hljs-type">int</span> accept_sock;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr</span> <span class="hljs-title">accept_addr</span>;</span><br>    <span class="hljs-type">socklen_t</span> len = <span class="hljs-keyword">sizeof</span>(accept_addr);<br>    accept_sock = accept(server_sock,&amp;accept_addr,&amp;len);<br>    <span class="hljs-keyword">if</span> (accept_sock == <span class="hljs-number">-1</span>)<br>    &#123;<br>        error_handing(<span class="hljs-string">&quot;accept() error&quot;</span>);<br>    &#125;<br>    <br>    <span class="hljs-comment">//步骤5：开始通讯</span><br>    <span class="hljs-type">char</span> message[<span class="hljs-number">10</span>];<br>    <span class="hljs-keyword">if</span> (read(accept_sock,message,<span class="hljs-number">10</span>) == <span class="hljs-number">-1</span>)<br>    &#123;<br>        error_handing(<span class="hljs-string">&quot;read() error&quot;</span>);<br>    &#125;<br>    <br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Read message is %s\n&quot;</span>,message);<br>    <span class="hljs-keyword">if</span> (write(accept_sock,message,<span class="hljs-number">10</span>) == <span class="hljs-number">-1</span>)<br>    &#123;<br>        error_handing(<span class="hljs-string">&quot;write() error&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-comment">//步骤6：关闭连接</span><br>    close(accept_sock);<br>    close(server_sock);<br></code></pre></td></tr></table></figure>
-<h2 id="客户端"><a href="#客户端" class="headerlink" title="客户端"></a>客户端</h2><h3 id="客户端遵循以下步骤进行搭建"><a href="#客户端遵循以下步骤进行搭建" class="headerlink" title="客户端遵循以下步骤进行搭建"></a>客户端遵循以下步骤进行搭建</h3><ol>
-<li>创建套接字</li>
-<li>指定端口连接</li>
-<li>进行通讯</li>
-<li>关闭连接</li>
+<h1 id="简单工厂模式解决了什么问题？"><a href="#简单工厂模式解决了什么问题？" class="headerlink" title="简单工厂模式解决了什么问题？"></a>简单工厂模式解决了什么问题？</h1><ol>
+<li>客户不用关心工厂内部的构造手段，减小了客户使用代码的出错率。这里的客户表示的是使用你代码的人，当然你自己就是使用别人代码的人。</li>
+<li>代码赋予结构性，减小了后期开发和维护难度。</li>
 </ol>
-<p>下面是创建客户端通讯的实例</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">//步骤1：创建套接字</span><br>    <span class="hljs-type">int</span> client_sock;<br>    client_sock = socket(PF_INET,SOCK_STREAM,<span class="hljs-number">0</span>);<br>    <span class="hljs-keyword">if</span> (client_sock == <span class="hljs-number">-1</span>)<br>    &#123;<br>        error_handing(<span class="hljs-string">&quot;socket() error&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-comment">//步骤2：连接端口</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr_in</span> <span class="hljs-title">connect_addr</span>;</span><br>    connect_addr.sin_family = AF_INET;<br>    connect_addr.sin_addr.s_addr = inet_addr(<span class="hljs-string">&quot;127.0.0.1&quot;</span>);<br>    connect_addr.sin_port = htons(<span class="hljs-number">3333</span>);<br>    <span class="hljs-keyword">if</span> (connect(client_sock,(<span class="hljs-keyword">struct</span> sockaddr *)&amp;connect_addr,<span class="hljs-keyword">sizeof</span>(connect_addr)) == <span class="hljs-number">-1</span>)<br>    &#123;<br>        error_handing(<span class="hljs-string">&quot;connect() error&quot;</span>);<br>    &#125;<br>    <br>    <span class="hljs-comment">//步骤3：进行通讯</span><br>    <span class="hljs-keyword">if</span> (write(client_sock,<span class="hljs-string">&quot;nihao&quot;</span>,<span class="hljs-keyword">sizeof</span>(<span class="hljs-string">&quot;nihao&quot;</span>)) == <span class="hljs-number">-1</span>)<br>    &#123;<br>        error_handing(<span class="hljs-string">&quot;write() error&quot;</span>);<br>    &#125;<br>    <span class="hljs-type">char</span> buffer[<span class="hljs-number">30</span>];<br>    <span class="hljs-keyword">if</span> (read(client_sock,buffer,<span class="hljs-number">30</span>) ==  <span class="hljs-number">-1</span>)<br>    &#123;<br>        error_handing(<span class="hljs-string">&quot;read() error&quot;</span>);<br>    &#125;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Receive message is %s\n&quot;</span>,buffer);<br>    <br>    <span class="hljs-comment">//步骤4：关闭连接</span><br>    close(client_sock);<br></code></pre></td></tr></table></figure>
-<h2 id="网络套接字和文件描述符"><a href="#网络套接字和文件描述符" class="headerlink" title="网络套接字和文件描述符"></a>网络套接字和文件描述符</h2><p><strong>在Linux环境中，操作网络套接字和文件描述符是一样的，上面实例中使用write()和read()函数操作网络套接字，<br>用法跟操作文件描述符别无二致，操作系统自动绑定了0、1、2对应I&#x2F;O描述符的标准输入、标准输出和标准错误</strong></p>
+<h1 id="简单工厂模式应用场景举例"><a href="#简单工厂模式应用场景举例" class="headerlink" title="简单工厂模式应用场景举例"></a>简单工厂模式应用场景举例</h1><ol>
+<li>一个软件系统提供了多个外观不同的按钮，它们都继承于按钮类，客户希望在使用这些按钮的时候，希望使用以下三个步骤来得到：</li>
+</ol>
+<ul>
+<li>调用工厂给出的创建方法；</li>
+<li>传入目标按钮对应的参数；</li>
+<li>返回目标按钮对象。</li>
+</ul>
+<p>上述流程使客户使用该接口时非常方便。</p>
+<h1 id="分析如何构造简单工厂模式？"><a href="#分析如何构造简单工厂模式？" class="headerlink" title="分析如何构造简单工厂模式？"></a>分析如何构造简单工厂模式？</h1><ol>
+<li>有一个可以统一对外输出产品的工厂类(Factory)，并且该类提供了一个所有产品的统一构造方法，该方法要求传入目标产品对应的参数，返回的是目标产品对象；</li>
+<li>一个抽象的产品类(Product)；</li>
+<li>多个具体的产品类(ProductA,ProductB…)，继承于抽象的产品类。</li>
+</ol>
+<h1 id="简单工厂模式的类图"><a href="#简单工厂模式的类图" class="headerlink" title="简单工厂模式的类图"></a>简单工厂模式的类图</h1><p><img src="/img/simple_factory.png" srcset="/img/loading.gif" lazyload></p>
+<h1 id="简单工厂模式的代码示例"><a href="#简单工厂模式的代码示例" class="headerlink" title="简单工厂模式的代码示例"></a>简单工厂模式的代码示例</h1><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span><span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span><span class="hljs-string">&lt;memory&gt;</span></span><br><br><span class="hljs-comment">//工厂创造具体产品时输入的参数</span><br><span class="hljs-keyword">typedef</span> <span class="hljs-keyword">enum</span>   <br>&#123;<br>    A,B<br>&#125;ProductType;<br><br><br><span class="hljs-comment">//抽象产品类</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Product</span><br>&#123;<br>    <span class="hljs-keyword">public</span>:<br>        <span class="hljs-built_in">Product</span>()&#123;std::cout&lt;&lt;<span class="hljs-string">&quot;Product constructor&quot;</span>&lt;&lt;std::endl;&#125;;<br>        ~<span class="hljs-built_in">Product</span>()&#123;std::cout&lt;&lt;<span class="hljs-string">&quot;Product destructor&quot;</span>&lt;&lt;std::endl;&#125;;<br>        <span class="hljs-function"><span class="hljs-keyword">virtual</span> <span class="hljs-type">void</span> <span class="hljs-title">produce</span><span class="hljs-params">()</span><span class="hljs-type">const</span></span>&#123;&#125;;<br><br>&#125;;<br><br><span class="hljs-comment">//具体产品A</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">ProductA</span>:<span class="hljs-keyword">public</span> Product<br>&#123;<br>    <span class="hljs-keyword">public</span>:<br>        <span class="hljs-built_in">ProductA</span>()&#123;std::cout&lt;&lt;<span class="hljs-string">&quot;ProductA constructor&quot;</span>&lt;&lt;std::endl;&#125;;<br>        ~<span class="hljs-built_in">ProductA</span>()&#123;std::cout&lt;&lt;<span class="hljs-string">&quot;ProductA destructor&quot;</span>&lt;&lt;std::endl;&#125;;<br>        <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">produce</span><span class="hljs-params">()</span><span class="hljs-type">const</span> </span><br><span class="hljs-function">        </span>&#123;<br>            std::cout&lt;&lt;<span class="hljs-string">&quot;我是产品 A&quot;</span>&lt;&lt;std::endl;<br>        &#125;<br>&#125;;<br><br><span class="hljs-comment">//具体产品B</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">ProductB</span>:<span class="hljs-keyword">public</span> Product<br>&#123;<br>    <span class="hljs-keyword">public</span>:<br>        <span class="hljs-built_in">ProductB</span>()&#123;std::cout&lt;&lt;<span class="hljs-string">&quot;ProductB constructor&quot;</span>&lt;&lt;std::endl;&#125;;<br>        ~<span class="hljs-built_in">ProductB</span>()&#123;std::cout&lt;&lt;<span class="hljs-string">&quot;ProductB destructor&quot;</span>&lt;&lt;std::endl;&#125;;<br>        <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">produce</span><span class="hljs-params">()</span><span class="hljs-type">const</span> </span><br><span class="hljs-function">        </span>&#123;<br>            std::cout&lt;&lt;<span class="hljs-string">&quot;我是产品 B&quot;</span>&lt;&lt;std::endl;<br>        &#125;<br>&#125;;<br><br><span class="hljs-comment">//工厂类</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Factory</span><br>&#123;<br>    <span class="hljs-keyword">public</span>:<br>        <span class="hljs-built_in">Factory</span>()&#123;std::cout&lt;&lt;<span class="hljs-string">&quot;Factory constructor&quot;</span>&lt;&lt;std::endl;&#125;;<br>        ~<span class="hljs-built_in">Factory</span>()&#123;std::cout&lt;&lt;<span class="hljs-string">&quot;Factory destructor&quot;</span>&lt;&lt;std::endl;&#125;;<br><br>        <span class="hljs-function">std::shared_ptr&lt;Product&gt; <span class="hljs-title">CreateProduct</span><span class="hljs-params">(ProductType type)</span><span class="hljs-comment">//面向客户的方法，生产对应的产品只需要输入对应的产品类型即可返回（生成）对应的产品</span></span><br><span class="hljs-function">        </span>&#123;<br>            <span class="hljs-keyword">switch</span> (type)<br>            &#123;<br>            <span class="hljs-keyword">case</span> A:<br>                <span class="hljs-keyword">return</span> std::<span class="hljs-built_in">make_shared</span>&lt;ProductA&gt;();<br>                <span class="hljs-keyword">break</span>;<br>            <span class="hljs-keyword">case</span> B:<br>                <span class="hljs-keyword">return</span> std::<span class="hljs-built_in">make_shared</span>&lt;ProductB&gt;();<br>                <span class="hljs-keyword">break</span>;<br>            <span class="hljs-keyword">default</span>:<br>                <span class="hljs-keyword">return</span> <span class="hljs-literal">nullptr</span>;<br>                <span class="hljs-keyword">break</span>;<br>            &#125;<br>        &#125;<br>    <br>&#125;;<br><br></code></pre></td></tr></table></figure>
+<h1 id="简单工厂模式的使用步骤和示例"><a href="#简单工厂模式的使用步骤和示例" class="headerlink" title="简单工厂模式的使用步骤和示例"></a>简单工厂模式的使用步骤和示例</h1><ol>
+<li>构建工厂</li>
+<li>构建抽象产品</li>
+<li>了解具体产品</li>
+<li>生产具体产品</li>
+<li>投入使用</li>
+</ol>
+<ul>
+<li><strong>示例</strong><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">//</span><br><span class="hljs-function">ProductType <span class="hljs-title">WeNeedProtductA</span><span class="hljs-params">()</span></span>&#123;<span class="hljs-keyword">return</span> ProductType::A;&#125;;<br><span class="hljs-function">ProductType <span class="hljs-title">WeNeedProtductB</span><span class="hljs-params">()</span></span>&#123;<span class="hljs-keyword">return</span> ProductType::B;&#125;;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">(<span class="hljs-type">int</span> argc, <span class="hljs-type">char</span> <span class="hljs-type">const</span> *argv[])</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-comment">//使用步骤1：构建工厂</span><br>    Factory factory;<br><br>    <span class="hljs-comment">//使用步骤2：构建抽象产品(客户具体需要什么产品还不知道)</span><br>    std::shared_ptr&lt;Product&gt;product;<br><br>    <span class="hljs-comment">//使用步骤3：客户打电话询问得知需要A类产品</span><br>    ProductType product_type = <span class="hljs-built_in">WeNeedProtductA</span>();<br><br>    <span class="hljs-comment">//使用步骤4：已经确定需要的具体产品，开始生产</span><br>    product = factory.<span class="hljs-built_in">CreateProduct</span>(<span class="hljs-built_in">static_cast</span>&lt;ProductType&gt;(product_type));<br><br>    <span class="hljs-comment">//使用步骤5：客户已经得到想要的产品，开始投入使用</span><br>    product-&gt;<span class="hljs-built_in">produce</span>();<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ul>
+<h1 id="简单工厂模式的使用示例输出"><a href="#简单工厂模式的使用示例输出" class="headerlink" title="简单工厂模式的使用示例输出"></a>简单工厂模式的使用示例输出</h1><figure class="highlight delphi"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs delphi">Factory <span class="hljs-function"><span class="hljs-keyword">constructor</span></span><br><span class="hljs-function"><span class="hljs-title">Product</span> <span class="hljs-title">constructor</span></span><br><span class="hljs-function"><span class="hljs-title">ProductA</span> <span class="hljs-title">constructor</span></span><br><span class="hljs-function">我是产品 <span class="hljs-title">A</span></span><br><span class="hljs-function"><span class="hljs-title">ProductA</span> <span class="hljs-title">destructor</span></span><br><span class="hljs-function"><span class="hljs-title">Product</span> <span class="hljs-title">destructor</span></span><br><span class="hljs-function"><span class="hljs-title">Factory</span> <span class="hljs-title">destructor</span></span><br><span class="hljs-function"></span><br></code></pre></td></tr></table></figure>
+<h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><p><a target="_blank" rel="noopener" href="https://gitee.com/alang_robot/design-patterns/tree/master/Creatoral%20Patterns/Simple%20Factory">示例代码仓库</a></p>
 
                 
               </div>
@@ -349,7 +365,7 @@
     
       <span class="category-chain">
         
-  <a href="/categories/TCP-IP%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/" class="category-chain-item">TCP/IP网络编程</a>
+  <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" class="category-chain-item">设计模式</a>
   
   
 
@@ -364,7 +380,7 @@
     <div class="post-meta">
       <i class="iconfont icon-tags"></i>
       
-        <a href="/tags/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/" class="print-no-link">#网络编程</a>
+        <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" class="print-no-link">#设计模式</a>
       
     </div>
   
@@ -376,8 +392,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>TCP/IP网络编程：理解网络编程和套接字</div>
-      <div>https://amoyalang.github.io/2024/11/04/net-code/</div>
+      <div>设计模式：简单工厂模式</div>
+      <div>https://amoyalang.github.io/2024/11/04/simple-factory/simple-factory/</div>
     </div>
     <div class="license-meta">
       
@@ -421,18 +437,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2024/11/04/simple-factory/simple-factory/" title="设计模式：简单工厂模式">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">设计模式：简单工厂模式</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2024/11/04/tcp-udp/" title="TCP和UDP">
-                        <span class="hidden-mobile">TCP和UDP</span>
+                      <a href="/2024/11/04/net-code/" title="TCP/IP网络编程：理解网络编程和套接字">
+                        <span class="hidden-mobile">TCP/IP网络编程：理解网络编程和套接字</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
