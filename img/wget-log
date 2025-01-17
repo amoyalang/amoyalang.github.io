@@ -1,0 +1,6 @@
+--2025-01-17 11:13:54--  https://t7.baidu.com/it/u=2029405597,3762594927
+Resolving t7.baidu.com (t7.baidu.com)... 112.49.42.36, 2409:8c28:90a0:200::27af:6124
+Connecting to t7.baidu.com (t7.baidu.com)|112.49.42.36|:443... connected.
+ERROR: cannot verify t7.baidu.com's certificate, issued by ‘CN=GlobalSign RSA OV SSL CA 2018,O=GlobalSign nv-sa,C=BE’:
+  Unable to locally verify the issuer's authority.
+To connect to t7.baidu.com insecurely, use `--no-check-certificate'.
