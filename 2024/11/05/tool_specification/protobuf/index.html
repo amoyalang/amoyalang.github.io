@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://amoyalang.github.io/img/tool_specification.jpeg">
 <meta property="article:published_time" content="2024-11-05T07:14:15.000Z">
-<meta property="article:modified_time" content="2025-01-17T03:38:11.714Z">
+<meta property="article:modified_time" content="2025-01-19T06:08:27.596Z">
 <meta property="article:author" content="amoy_alang">
 <meta property="article:tag" content="工具说明">
 <meta name="twitter:card" content="summary_large_image">
@@ -245,7 +245,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          137 字
+          160 字
         
       </span>
     
@@ -311,7 +311,7 @@
             
               <div class="markdown-body">
                 
-                <h2 id="1-常用指令"><a href="#1-常用指令" class="headerlink" title="1.常用指令"></a>1.常用指令</h2><ul>
+                <h2 id="1-常用指令"><a href="#1-常用指令" class="headerlink" title="1.常用指令"></a>1.常用指令</h2><h3 id="windows-platform"><a href="#windows-platform" class="headerlink" title="windows platform"></a>windows platform</h3><ul>
 <li>1.1 生成grpc的头文件和源文件</li>
 </ul>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">D:\cppsoft\grpc_binaries\third_party\protobuf\Debug\protoc.exe  -I=<span class="hljs-string">&quot;.&quot;</span> --grpc_out=<span class="hljs-string">&quot;.&quot;</span> --plugin=protoc-gen-grpc=<span class="hljs-string">&quot;D:\cppsoft\grpc_binaries\Debug\grpc_cpp_plugin.exe&quot;</span> <span class="hljs-string">&quot;message.proto&quot;</span><br></code></pre></td></tr></table></figure>
@@ -325,6 +325,11 @@
 <li>1.3 linux生成的头文件和源文件</li>
 </ul>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 生成 protobuf 相关代码</span><br>protoc -I=./config \<br>    --cpp_out=./src/protoc \<br>    ./config/message.proto<br><br><span class="hljs-comment"># 生成 grpc 相关代码</span><br>protoc -I=./config \<br>    --grpc_out=./src/protoc \<br>    --plugin=protoc-gen-grpc=`<span class="hljs-built_in">which</span> grpc_cpp_plugin` \<br>    ./config/message.proto<br></code></pre></td></tr></table></figure>
+
+<h3 id="linux-platform"><a href="#linux-platform" class="headerlink" title="linux platform"></a>linux platform</h3><ul>
+<li>1.1 生成grpc的头文件和源文件</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash"><br>alang@ubuntu:~/sm_service_go/gateServer/rpc/ttsServer$ goctl rpc protoc ttsserver.proto --go_out=. --<br>go-grpc_out=. --zrpc_out=.<br></code></pre></td></tr></table></figure>
 
 <h2 id="2-参考文档"><a href="#2-参考文档" class="headerlink" title="2.参考文档"></a>2.参考文档</h2><ul>
 <li><a href="https://amoyalang.github.io/2024/11/04/protocbuf/">2.1个人博客</a></li>
